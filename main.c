@@ -37,41 +37,17 @@ typedef struct instance {
 } Instance;
 
 void initStack(Stack *stack, int size);
-void initTape(Tape *t, int size);
-char *findTapeTail(Tape t);
-char *findEnclosingBracket(char *start);
-void resetTapeHead(Tape *t);
-bool runInstance(Instance instance);
-bool validateCode(Tape *code);
-void executeCode(Tape *memory, Tape *code, Tape *input, Subcode subcode);
 bool isEmpty(Stack *stack);
 bool isFull(Stack *stack);
 char *pop(Stack *stack);
 void push(Stack *stack, char *data);
-
-void initStack(Stack *stack, int size) {
-    stack->max = size;
-    stack->list = malloc(stack->max * sizeof(char *));
-    for(int i = 0; i < stack->max; ++i)
-        stack->list[i] = 0;
-    stack->top = 0;
-}
-
-void initTape(Tape *t, int size) {
-    t->tape = malloc(size * sizeof(char));
-    resetTapeHead(t);
-}
-
-char *findTapeTail(Tape t) {
-    int i = 0;
-    while (t.tape[++i] != '\0')
-        continue;
-    return &t.tape[i-1];
-}
-
-void resetTapeHead(Tape *t) {
-    t->head = t->tape;
-}
+void initTape(Tape *t, int size);
+char *findTapeTail(Tape t);
+void resetTapeHead(Tape *t);
+char *findEnclosingBracket(char *start);
+bool validateCode(Tape *code);
+void executeCode(Tape *memory, Tape *code, Tape *input, Subcode subcode);
+bool runInstance(Instance instance);
 
 int main() {
     int instanceCount, i;
@@ -98,25 +74,53 @@ int main() {
     return 0;
 }
 
-bool validateCode(Tape *code) {
-    Stack brackets;
-    initStack(&brackets, 100);
+void initStack(Stack *stack, int size) {
+    int i;
+    stack->max = size;
+    stack->list = malloc(stack->max * sizeof(char *));
+    for(i = 0; i < stack->max; ++i)
+        stack->list[i] = 0;
+    stack->top = 0;
+}
 
-    while (*code->head) {
-        switch (*code->head) {
-            case BRACKET_O:
-                push(&brackets, code->head);
-                break;
-            case BRACKET_C:
-                pop(&brackets);
-                break;
-            default:
-                break;
-        }
-        ++code->head;
-    }
-    resetTapeHead(code);
-    return isEmpty(&brackets);
+bool isEmpty(Stack *stack) {
+    return stack->top == 0;
+}
+
+bool isFull(Stack *stack) {
+    return stack->top == stack->max;
+}
+
+char *pop(Stack *stack) {
+    char *data = NULL;
+    if(!isEmpty(stack))
+        data = stack->list[(stack->top--) - 1];
+    else
+        printf("Could not retrieve data, Stack is empty.\n");
+    return data;
+}
+
+void push(Stack *stack, char *data) {
+    if(!isFull(stack))
+        stack->list[stack->top++] = data;
+    else
+        printf("Could not insert data, Stack is full.\n");
+}
+
+void initTape(Tape *t, int size) {
+    t->tape = malloc(size * sizeof(char));
+    resetTapeHead(t);
+}
+
+char *findTapeTail(Tape t) {
+    int i = 0;
+    while (t.tape[++i] != '\0')
+        continue;
+    return &t.tape[i-1];
+}
+
+void resetTapeHead(Tape *t) {
+    t->head = t->tape;
 }
 
 char *findEnclosingBracket(char *start) {
@@ -140,6 +144,27 @@ char *findEnclosingBracket(char *start) {
         }
         ++tempHead;
     }
+}
+
+bool validateCode(Tape *code) {
+    Stack brackets;
+    initStack(&brackets, 100);
+
+    while (*code->head) {
+        switch (*code->head) {
+            case BRACKET_O:
+                push(&brackets, code->head);
+                break;
+            case BRACKET_C:
+                pop(&brackets);
+                break;
+            default:
+                break;
+        }
+        ++code->head;
+    }
+    resetTapeHead(code);
+    return isEmpty(&brackets);
 }
 
 void executeCode(Tape *memory, Tape *code, Tape *input, Subcode subcode){
@@ -194,10 +219,11 @@ void executeCode(Tape *memory, Tape *code, Tape *input, Subcode subcode){
 }
 
 bool runInstance(Instance instance) {
+    int i;
     Tape memory;
     initTape(&memory, MEMORY_SIZE);
 
-    for (int i = 0; i < MEMORY_SIZE; i++)
+    for (i = 0; i < MEMORY_SIZE; i++)
         memory.tape[i] = 0;
 
     printf("Instancia %d\n", instance.id);
@@ -212,28 +238,4 @@ bool runInstance(Instance instance) {
     printf("\n\n");
 
     return true;
-}
-
-bool isEmpty(Stack *stack) {
-    return stack->top == 0;
-}
-
-bool isFull(Stack *stack) {
-    return stack->top == stack->max;
-}
-
-char *pop(Stack *stack) {
-    char *data = NULL;
-    if(!isEmpty(stack))
-        data = stack->list[(stack->top--) - 1];
-    else
-        printf("Could not retrieve data, Stack is empty.\n");
-    return data;
-}
-
-void push(Stack *stack, char *data) {
-    if(!isFull(stack))
-        stack->list[stack->top++] = data;
-    else
-        printf("Could not insert data, Stack is full.\n");
 }
